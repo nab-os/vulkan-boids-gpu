@@ -19,6 +19,6 @@ glslangValidator -H -V -o shaders/compute.spv shaders/shader.comp
 
 ```
 ./boids_simulate [boids_number] [visual_range] [repel_distance] [max_speed] [check_reduction]
+```
 Check reduction is used to divide the number of checks around each boid.
 This is a little hack to allow a big number of boids, but the greater the reduction, the more behavior artifacts will appear. Using a reduction of 1 means that no reduction is used.
-```
