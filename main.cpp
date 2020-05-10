@@ -111,13 +111,14 @@ struct UniformBufferObject {
     float visual_range;
     float repel_distance;
     float max_speed;
+    int check_reduction;
 };
 
 std::vector<Boid> boids;
 
 class BoidsSimulation {
     public:
-        BoidsSimulation(int boids_number, float visual_range, float repel_distance, float max_speed): ubo({boids_number, visual_range, repel_distance, max_speed}) {};
+        BoidsSimulation(int boids_number, float visual_range, float repel_distance, float max_speed, int check_reduction): ubo({boids_number, visual_range, repel_distance, max_speed, check_reduction}) {};
         void run() {
             initWindow();
             initVulkan();
@@ -239,8 +240,10 @@ class BoidsSimulation {
 
         void mainLoop() {
             cout << "\nBoids number: " << ubo.boids_number << "\n";
-            cout << "Visual range: " << ubo.visual_range << "\n";
-            cout << "Repel distance: " << ubo.repel_distance << "\n";
+            cout << "Visual range: " << ubo.visual_range * 1920 << "\n";
+            cout << "Repel distance: " << ubo.repel_distance * 1920 << "\n";
+            cout << "Max speed: " << ubo.max_speed * 1920 << "\n";
+            cout << "Check reduction: " << ubo.check_reduction << "\n";
             cout << "Running..." << endl;
             while (!glfwWindowShouldClose(window)) {
                 int startTime = int(glfwGetTime() * 1000);
@@ -1505,12 +1508,13 @@ class BoidsSimulation {
 int main(int argc, char** argv) {
     for(int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-h") == 0) {
-            cout << "Usage: boids_simulation [boids_number] [visual_range] [repel_distance] [max_speed]" << "\n";
+            cout << "Usage: boids_simulation [boids_number] [visual_range] [repel_distance] [max_speed] [check_reduction]" << "\n";
             cout << "Defaults: \n";
             cout << "\tboids_number = 1000\n";
             cout << "\tvisual_range = 50\n";
             cout << "\trepel_distance = 6\n";
-            cout << "\tmax_speed = 10" << endl;
+            cout << "\tmax_speed = 10\n";
+            cout << "\tcheck_reduction = 1" << endl;
             return EXIT_SUCCESS;
         }
     }
@@ -1519,6 +1523,7 @@ int main(int argc, char** argv) {
     float visual_range = 50.0 / 1920.0;
     float repel_distance = 6.0 / 1920.0;
     float max_speed = 10.0 / 1920.0;
+    int check_reduction = 1;
 
     if (argc > 1) {
         boids_number = atoi(argv[1]);
@@ -1528,12 +1533,15 @@ int main(int argc, char** argv) {
                 repel_distance = atoi(argv[3]) / 1920.0;
                 if (argc > 4) {
                     max_speed = atoi(argv[4]) / 1920.0;
+                    if (argc > 5) {
+                        check_reduction = atoi(argv[5]);
+                    }
                 }
             }
         }
     }
 
-    BoidsSimulation app(boids_number, visual_range, repel_distance, max_speed);
+    BoidsSimulation app(boids_number, visual_range, repel_distance, max_speed, check_reduction);
 
     try {
         app.run();

@@ -15,6 +15,7 @@ layout(binding = 2) uniform UniformBufferObject {
     float visual_range;
     float repel_distance;
     float max_speed;
+    int check_reduction;
 } ubo;
 
 void main() {
@@ -28,7 +29,7 @@ void main() {
 
     int birds_seen = 0;
     int birds_too_close = 0;
-    for (int i = 0; i < 10000; i++) {
+    for (int i = 0; i < ubo.boids_number/ubo.check_reduction; i++) {
         vec2 temp_position = positions[i*2];
         vec2 temp_movement = positions[i*2+1];
         if (distance(temp_position, bird_position) < ubo.visual_range) {
