@@ -2,7 +2,7 @@
 
 This project is a proof of concept that implements the Boids algorithm with compute shaders using Vulkan.
 On my machine, it can handle around 3000 entities.
-![Screenshot](/Screenshots/2020-04-29-19_26_55.png)
+![Screenshot](/screenshots/10000.png)
 
 
 ## Installation
