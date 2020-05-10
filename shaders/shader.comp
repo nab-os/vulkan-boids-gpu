@@ -1,0 +1,82 @@
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+layout(local_size_x = 100, local_size_y = 1) in;
+
+layout(set = 0, binding = 0) buffer PositionBuffer {
+    vec2 positions[];
+};
+
+layout(set = 0, binding = 1) buffer MovementBuffer {
+    vec2 movements[];
+};
+
+layout(binding = 2) uniform UniformBufferObject {
+    int boids_number;
+    float visual_range;
+    float repel_distance;
+    float max_speed;
+} ubo;
+
+void main() {
+    uint bird_index = gl_GlobalInvocationID.x * 2;
+    vec2 bird_position = positions[bird_index];
+    vec2 bird_movement = positions[bird_index + 1];
+
+    vec2 mean_position = vec2(0);
+    vec2 mean_movement = vec2(0);
+    vec2 mean_repel = vec2(0);
+
+    int birds_seen = 0;
+    int birds_too_close = 0;
+    for (int i = 0; i < 10000; i++) {
+        vec2 temp_position = positions[i*2];
+        vec2 temp_movement = positions[i*2+1];
+        if (distance(temp_position, bird_position) < ubo.visual_range) {
+            mean_position += temp_position;
+            mean_movement += temp_movement;
+            birds_seen++;
+            if (distance(temp_position, bird_position) < ubo.repel_distance) {
+                mean_repel += bird_position - temp_position;
+                birds_too_close++;
+            }
+        }
+    }
+    mean_position /= birds_seen;
+    mean_movement /= birds_seen;
+
+    vec2 move_to_center = (mean_position - bird_position) * 0.0004;
+    vec2 repel_movement = (mean_repel) * 0.01;
+    vec2 align_movement = (mean_movement) * 0.08;
+
+    if (birds_seen > 0) {
+        bird_movement += align_movement + move_to_center;
+        if (birds_too_close > 0) {
+            bird_movement += repel_movement;
+        }
+    }
+
+    if (length(bird_movement) > ubo.max_speed) {
+        bird_movement = normalize(bird_movement) * ubo.max_speed;
+    }
+
+    bird_position += bird_movement;
+
+    float speed_boost = 1;
+    if (bird_position.x < -1) {
+        bird_position.x = -1;
+        bird_movement = reflect(bird_movement, vec2(1, 0)) * speed_boost;
+    } else if (bird_position.x > 1) {
+        bird_position.x = 1;
+        bird_movement = reflect(bird_movement, vec2(-1, 0)) * speed_boost;
+    }
+    if (bird_position.y < -1) {
+        bird_position.y = -1;
+        bird_movement = reflect(bird_movement, vec2(0, 1)) * speed_boost;
+    } else if (bird_position.y > 1) {
+        bird_position.y = 1;
+        bird_movement = reflect(bird_movement, vec2(0, -1)) * speed_boost;
+    }
+
+    positions[bird_index] = bird_position;
+    positions[bird_index+1] = bird_movement;
+}
