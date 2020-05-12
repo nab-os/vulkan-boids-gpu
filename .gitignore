@@ -1,2 +1,5 @@
 boids_simulation
 shaders/*.spv
+report/*
+!report/*.tex
+!report/*.pdf
