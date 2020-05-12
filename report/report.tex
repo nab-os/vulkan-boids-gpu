@@ -24,20 +24,30 @@ To that, I added a speed limit, and a screen-space restriction so that the boids
 But my first impression was that the number of simulation entity shown in the video was pretty low (200 boids).\\
 So I searched for other examples of simulations, but I didn't find that much results.
 
+To give some perspective to the following values here is a quick sum-up of my current hardware:
+\begin{itemize}
+    \item CPU: AMD Ryzen 7 3700x 3.6GHz
+    \item RAM: G.Skill 32Go 3200MHz CL16
+    \item GPU: AMD Radeon RX 570 4GD5
+\end{itemize}
+Moreover I consider that under 30 frame per second is not enough to be considered fluid, so the boids population size limit is capture so that it runs above 30fps.
+
 \section{OpenGL prototype}
-At this time, I hadn't touched OpenGL for quite a long time, this was the perfect occasion.\\
+At this time, I hadn't touched OpenGL for quite a long time, this was the perfect occasion to get back to it.\\
 One of the few things in OpenGL I didn't know how to use was the compute shaders.\\
-When using graphical API like OpenGL or Vulkan, we tell the GPU to do so processing and sometimes we don't need the result to be displayed, so we don't need the full standard rendering pipeline. That is what compute shaders are for. Simple highly parallel processing.\\
+When using graphical API like OpenGL or Vulkan, we tell the GPU to do some processing and sometimes we don't need the result to be displayed, so we don't need the full standard rendering pipeline. That is what compute shaders are for. Simple highly parallel processing.\\
 
 Firstly I tried to store the boids positions inside a texture, (not knowing about Buffer Storage, which is a cleaner solution), using a compute shader to update the positions and speed vector. It worked, I reached a few thousands boids quite rapidly. But the major issue in this implementation is the fact that every boid needs to compute it's distance to every other boid to check if it is inside its visual range.\\
-This is exponential, and it creates a bottleneck.\\
+This is exponential, and it creates a bottleneck around 4000 boids.\\
+
 I then tried a little work-around by using a screen-space texture to store a kind of heatmap. I added another compute shader whose role was: for each boid, affecting the texture so that every point in the visual range of the boid represents it's "push/pull force".\\
 If multiples boid visual range overlap, the resulting vector should be averaged.\\
 And in the boids position update shader, I could then use the texture to get the forces applied to each boid and move there position according to that, without the need to check every other boid.\\
-Besides the fact that this solution works, this is no longer creating a flocking effect, this is more gravitational-like behavior. So I dumped this work-around.\\
+Besides the fact that this solution works and that I could easily double the size of the population, this is no longer creating a flocking effect, this is more gravitational-like behavior. So I dumped this work-around.\\
 
 Finally, by looking for some references on the Internet, I read about Buffer Storage. It allows me to store the boids positions and speed vectors inside a buffer inside the graphic card, like before but without the need to extract from a texture, just a simple array.\\
 Another main advantage of using Buffer Storage is that I can simply call the render pipeline with this buffer used as vertex positions and so stop using a post-processing type of render where every pixel of the image is explicitly rendered through the pipeline even if there is no boid here.\\
+This doesn't change much in terms of performances but it is may more clean and easyer to understand by reading the code.
 
 \section{Vulkan prototype}
 At this point I still wanted to go higher and it was an occasion to finally try Vulkan.\\
