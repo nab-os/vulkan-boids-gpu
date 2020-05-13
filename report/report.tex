@@ -1,5 +1,9 @@
 \documentclass{article}
 \usepackage{hyperref}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{graphicx}
+\graphicspath{{./images/}}
 
 \title{Experimenting Boids algorithm with OpenGL and Vulkan API}
 \author{Nicolas Ballet}
@@ -38,16 +42,47 @@ One of the few things in OpenGL I didn't know how to use was the compute shaders
 When using graphical API like OpenGL or Vulkan, we tell the GPU to do some processing and sometimes we don't need the result to be displayed, so we don't need the full standard rendering pipeline. That is what compute shaders are for. Simple highly parallel processing.\\
 
 Firstly I tried to store the boids positions inside a texture, (not knowing about Buffer Storage, which is a cleaner solution), using a compute shader to update the positions and speed vector. It worked, I reached a few thousands boids quite rapidly. But the major issue in this implementation is the fact that every boid needs to compute it's distance to every other boid to check if it is inside its visual range.\\
-This is exponential, and it creates a bottleneck around 4000 boids.\\
+This is exponential, and it creates a bottleneck around 5000 boids.\\
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[H]{\textwidth}
+        \centering
+        \includegraphics[width=.9\linewidth]{boids_positions.jpg}
+        \caption{Boids positions on screen}
+    \end{subfigure}
+    \begin{subfigure}[H]{\textwidth}
+        \centering
+        \includegraphics[width=.4\linewidth]{boids_positions_texture.jpg}
+        \caption{Texture where boids positions are stored}
+    \end{subfigure}
+    \caption{Visualization of boids position storage}
+\end{figure}
 
-I then tried a little work-around by using a screen-space texture to store a kind of heatmap. I added another compute shader whose role was: for each boid, affecting the texture so that every point in the visual range of the boid represents it's "push/pull force".\\
+I then tried a little work-around by using a screen-space texture to store a kind of heatmap that I will call a vector map. I added another compute shader whose role was: for each boid, affecting the texture so that every point in the visual range of the boid represents it's "push/pull force".\\
 If multiples boid visual range overlap, the resulting vector should be averaged.\\
 And in the boids position update shader, I could then use the texture to get the forces applied to each boid and move there position according to that, without the need to check every other boid.\\
-Besides the fact that this solution works and that I could easily double the size of the population, this is no longer creating a flocking effect, this is more gravitational-like behavior. So I dumped this work-around.\\
+Here is a capture of the vector map
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[H]{\textwidth}
+        \centering
+        \includegraphics[width=.9\linewidth]{boids_vector_map.jpg}
+        \caption{Render output of the boid positions}
+    \end{subfigure}
+    \begin{subfigure}[H]{\textwidth}
+        \centering
+        \includegraphics[width=.9\linewidth]{vector_map.jpg}
+        \caption{Vector map of the push/pull forces}
+    \end{subfigure}
+    \caption{Visualization of the generated vector map}
+\end{figure}
+
+Besides the fact that this solution works and that I could easily make the population reach 20 thousands boids, this is no longer creating a flocking effect, this is more gravitational-like behavior.
+And in top of that, as the shader execution is highly parallel, there is some race when two boids visual range overlap. And if the first one read the current value of the vector map and another stores a new value before the first boid does, the resulting value is incorrect. But as the results were not satisfying enough anyway, I dumped this work-around.\\
 
 Finally, by looking for some references on the Internet, I read about Buffer Storage. It allows me to store the boids positions and speed vectors inside a buffer inside the graphic card, like before but without the need to extract from a texture, just a simple array.\\
 Another main advantage of using Buffer Storage is that I can simply call the render pipeline with this buffer used as vertex positions and so stop using a post-processing type of render where every pixel of the image is explicitly rendered through the pipeline even if there is no boid here.\\
-This doesn't change much in terms of performances but it is may more clean and easyer to understand by reading the code.
+This doesn't change much in terms of performances, but it is cleaner and easier to understand by reading the code.
 
 \section{Vulkan prototype}
 At this point I still wanted to go higher and it was an occasion to finally try Vulkan.\\
@@ -60,6 +95,20 @@ And just by switching to Vulkan I reached one hundred thousands boids.\\
 
 With that many boids, scanning every boids may be mathematically perfect but computationally heavy, so I added a small hack to divide the number of flockmates each boid will check. This create small behavior artifacts if a too high factor is used but permits to reach one million boids.\\
 I was done.
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[H]{\textwidth}
+        \centering
+        \includegraphics[width=.9\linewidth]{100000.png}
+        \caption{One hundred thousands boids with no tweak.}
+    \end{subfigure}
+    \begin{subfigure}[H]{\textwidth}
+        \centering
+        \includegraphics[width=.9\linewidth]{1000000.png}
+        \caption{One million boids with a check division factor of 100.}
+    \end{subfigure}
+    \caption{Examples of the final results}
+\end{figure}
 
 \newpage
 \section{Conclusion}
@@ -69,4 +118,7 @@ I am now much more at ease with Vulkan API and will continue to work with it.\\
 
 I have to note down one major downside with using Vulkan for prototyping: my OpenGL version was around 230 lines of source code against the Vulkan version which was around 1700 lines of code.\\
 From this experience, I think that prototyping the first versions with OpenGL and then using Vulkan to validate the performances is a great workflow, at least for some non-expert like me.
+
+\newpage
+\listoffigures
 \end{document}
