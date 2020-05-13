@@ -22,3 +22,8 @@ glslangValidator -H -V -o shaders/compute.spv shaders/shader.comp
 ```
 Check reduction is used to divide the number of checks around each boid.
 This is a little hack to allow a big number of boids, but the greater the reduction, the more behavior artifacts will appear. Using a reduction of 1 means that no reduction is used.
+
+## Report
+
+If you want to know how it's done, I wrote a little report on the things I've tried and the results I got:
+<https://github.com/nab-os/vulkan-boids-gpu/blob/master/report/report.pdf>
