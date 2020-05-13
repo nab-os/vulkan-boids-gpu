@@ -3,3 +3,4 @@ shaders/*.spv
 report/*
 !report/*.tex
 !report/*.pdf
+!report/images
