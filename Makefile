@@ -1,6 +1,6 @@
 VULKAN_SDK_PATH = /home/user/VulkanSDK/x.x.x.x/x86_64
 
-CFLAGS = -std=c++17 -I$(VULKAN_SDK_PATH)/include -I/usr/include/stb
+CFLAGS = -std=c++17 -I$(VULKAN_SDK_PATH)/include
 LDFLAGS = -L$(VULKAN_SDK_PATH)/lib `pkg-config --static --libs glfw3` -lvulkan -lpthread -lstdc++
 
 boids_simulation: main.cpp
